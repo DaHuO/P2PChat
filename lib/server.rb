@@ -1,9 +1,23 @@
 load "lib/ThreadPool.rb"
 require "socket"
+require "net/http"
 
 class Server
-	def initialize(port)
-		@port = port
+	def initialize(info, para)
+		if info == "start"
+			@identifier = para[0]
+			@port = para[1]
+			p @identifier
+		elsif info == "join"
+			@identifier = para[1]
+			@ip = para[0]
+			@port = para[2]
+			p @ip
+			p @identifier
+		else
+			raise SystemExit
+		end
+
 		@server = TCPServer.open(@port)
 		@routing_table = Hash.new
 		uri = URI("http://ipecho.net/plain")
