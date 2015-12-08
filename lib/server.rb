@@ -1,6 +1,8 @@
-load "lib/ThreadPool.rb"
+require './lib/ThreadPool.rb'
+require './lib/RoutingTable.rb'
 require "socket"
 require "net/http"
+require 'json'
 
 class Server
 	def initialize(info, para)
@@ -20,7 +22,7 @@ class Server
 
 		@server = UDPSocket.new()
 		@server.bind(nil, @port)
-		@routing_table = Hash.new
+		@routing_table = RoutingTable.new()
 		uri = URI("http://ipecho.net/plain")
 		body = Net::HTTP.get(uri)
 		if body.length != 0
@@ -31,35 +33,37 @@ class Server
 		if info == "join"
 			join(@identifier, @ip, @port)
 		else
-			start(@identifier, @port)
+			start_boost(@identifier, @port)
 		end
+	end
+
+	def join(identifier, ip, port)
 		run
 	end
 
-	def join(identifier, ip, port)
-	end
-
-	def start(identifier, port)
+	def start_boost(identifier, port)
+		run
 	end
 
 	def run
-		thread_pool = ThreadPool.new(10)
+		thread_pool = ThreadPool.new(5)
 		loop{
 			text, sender = @server.recvfrom(100)
-			puts text
+			thread_pool.schedule(sender) do
+				p "into thread pool"
+				p Thread.current[:id]
+				p text
+				handle_client(text)
+			end
 		}
 	end
 
-	def start(identifier, port)
-	end
-
-	def handle_client(c)
+	def handle_client(text)
+		message = JSON.parse(text)
+		p message
 	end
 
 	def routing
-	end
-
-	def join(identifier, ip, port)
 	end
 
 	def leave
@@ -69,6 +73,16 @@ class Server
 	end
 
 	def receive_message
+	end
+
+	def hashcode(s)
+		hash = 0
+		for i in 0..(s.length-1)
+			hash = hash * 31 + s[i].ord
+			p s[i]
+			p s[i].ord
+		end
+		return hash
 	end
 
 end
