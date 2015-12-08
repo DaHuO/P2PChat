@@ -18,7 +18,8 @@ class Server
 			raise SystemExit
 		end
 
-		@server = TCPServer.open(@port)
+		@server = UDPSocket.new()
+		@server.bind(nil, @port)
 		@routing_table = Hash.new
 		uri = URI("http://ipecho.net/plain")
 		body = Net::HTTP.get(uri)
@@ -27,19 +28,38 @@ class Server
 		else
 			@ip = '127.0.0.1'
 		end
+		if info == "join"
+			join(@identifier, @ip, @port)
+		else
+			start(@identifier, @port)
+		end
 		run
 	end
 
-	def run
+	def join(identifier, ip, port)
 	end
 
-	def message_handle
+	def start(identifier, port)
+	end
+
+	def run
+		thread_pool = ThreadPool.new(10)
+		loop{
+			text, sender = @server.recvfrom(100)
+			puts text
+		}
+	end
+
+	def start(identifier, port)
+	end
+
+	def handle_client(c)
 	end
 
 	def routing
 	end
 
-	def join
+	def join(identifier, ip, port)
 	end
 
 	def leave
