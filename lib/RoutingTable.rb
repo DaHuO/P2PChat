@@ -17,6 +17,10 @@ class RoutingTable
 		@routing_table.delete(node_id)
 	end
 
+	def getport(node_id)
+		return @routing_table[node_id]
+	end
+
 	def merge(rt)
 		for node_id in rt.keys
 			unless @routing_table.has_key?(node_id)
@@ -24,5 +28,5 @@ class RoutingTable
 			end
 		end
 	end
-	
+
 end
