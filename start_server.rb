@@ -38,12 +38,13 @@ if ARGV.length == 3
 	else
 		puts Erroinfo
 	end
-elsif ARGV.length == 4
+elsif ARGV.length == 5
 	if ARGV[0] == "--bootstrap"
-		Port = ARGV[3].to_i
+		selfPort = ARGV[5].to_i
+		destport = ARGV[2]
 		Ip = ARGV[1]
-		Identifier = ARGV[2][2,-1].to_i
-		para = [Ip, Identifier, Port]
+		Identifier = ARGV[4].to_i
+		para = [Ip, destport, Identifier, selfPort]
 		Server.new("join",para)
 	else
 		puts Erroinfo

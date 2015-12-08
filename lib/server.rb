@@ -8,36 +8,43 @@ class Server
 	def initialize(info, para)
 		if info == "start"
 			@identifier = para[0]
-			@port = para[1]
+			@selfport = para[1]
 			p @identifier
 		elsif info == "join"
-			@identifier = para[1]
+			@identifier = para[2]
 			@ip = para[0]
-			@port = para[2]
-			p @ip
-			p @identifier
+			@destport = para[1]
+			@selfport = para[3]
 		else
 			raise SystemExit
 		end
 
 		@server = UDPSocket.new()
-		@server.bind(nil, @port)
+		@server.bind(nil, @selfport)
 		@routing_table = RoutingTable.new()
 		uri = URI("http://ipecho.net/plain")
 		body = Net::HTTP.get(uri)
 		if body.length != 0
-			@ip = body
+			@self_ip = body
 		else
-			@ip = '127.0.0.1'
+			@self_ip = '127.0.0.1'
 		end
 		if info == "join"
-			join(@identifier, @ip, @port)
+			join(@identifier, @ip, @destport)
 		else
-			start_boost(@identifier, @port)
+			start_boost(@identifier, @selfport)
 		end
 	end
 
-	def join(identifier, ip, port)
+	def join(identifier, ip, destport)
+		message = Hash.new()
+		message['type'] = "JOINING_NETWORK"
+		message['node_id'] = identifier.to_s
+		message['ip_address'] = @self_ip
+		message['port'] = @selfport
+		msg = JSON.generate(message)
+		s = UDPSocket.new()
+		s.send(msg, 0, ip, @destport)
 		run
 	end
 
