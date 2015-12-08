@@ -11,10 +11,9 @@ class Server
 			@selfport = para[1]
 			p @identifier
 		elsif info == "join"
-			@identifier = para[2]
-			@ip = para[0]
-			@destport = para[1]
-			@selfport = para[3]
+			@identifier = para[1]
+			@destport = para[0]
+			@selfport = para[2]
 		else
 			raise SystemExit
 		end
@@ -30,21 +29,21 @@ class Server
 			@self_ip = '127.0.0.1'
 		end
 		if info == "join"
-			join(@identifier, @ip, @destport)
+			join(@identifier, @destport, @selfport)
 		else
 			start_boost(@identifier, @selfport)
 		end
 	end
 
-	def join(identifier, ip, destport)
+	def join(identifier, destport, selfport)
+		puts 'JOIN'
 		message = Hash.new()
 		message['type'] = "JOINING_NETWORK"
 		message['node_id'] = identifier.to_s
-		message['ip_address'] = @self_ip
-		message['port'] = @selfport
+		message['port'] = selfport
 		msg = JSON.generate(message)
 		s = UDPSocket.new()
-		s.send(msg, 0, ip, @destport)
+		s.send(msg, 0, '127.0.0.1', destport)
 		run
 	end
 
@@ -67,7 +66,18 @@ class Server
 
 	def handle_client(text)
 		message = JSON.parse(text)
-		p message
+		message_type = message['type']
+		case message_type
+		when 'JOINING_NETWORK'
+			puts 'JOINING_NETWORK'
+			joining_network(message['node_id'], message['port'])
+		end
+	end
+
+	def joining_network(node_id, port)
+		routing_message = generate_routing_info(@identifier, node_id, port)
+		s = UDPSocket.new()
+		s.send(routing_message, 0, '127.0.0.1', port)
 	end
 
 	def routing
@@ -90,6 +100,18 @@ class Server
 			p s[i].ord
 		end
 		return hash
+	end
+
+	def generate_routing_info(gateway_id, node_id, port_number)
+		routing_info = Hash.new()
+		routing_info['type'] = 'ROUTING_INFO'
+		routing_info['gateway_id'] = gateway_id
+		routing_info['node_id'] = node_id
+		routing_info['port_number'] = port_number
+		routing_info['route_table'] = @routing_table.routing_table
+		msg = JSON.generate(routing_info)
+		p msg
+		return msg
 	end
 
 end

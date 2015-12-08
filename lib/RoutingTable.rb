@@ -16,4 +16,13 @@ class RoutingTable
 	def del(node_id)
 		@routing_table.delete(node_id)
 	end
+
+	def merge(rt)
+		for node_id in rt.keys
+			unless @routing_table.has_key?(node_id)
+				@routing_table[node_id] = rt[node_id]
+			end
+		end
+	end
+	
 end

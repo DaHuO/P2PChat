@@ -27,7 +27,7 @@ load "lib/server.rb"
 
 Erroinfo = "command line parameter not fit:\n" + 
 	"\t'--boot [Integer Identifier] [port]' for start\n" +
-	"\t'--bootstrap [IP Address] --id [Integer Identifier] [port]' for join\n"
+	"\t'--bootstrap [port] --id [Integer Identifier] [port]' for join\n"
 
 if ARGV.length == 3
 	if ARGV[0] == "--boot"
@@ -40,11 +40,10 @@ if ARGV.length == 3
 	end
 elsif ARGV.length == 5
 	if ARGV[0] == "--bootstrap"
-		selfPort = ARGV[5].to_i
-		destport = ARGV[2]
-		Ip = ARGV[1]
-		Identifier = ARGV[4].to_i
-		para = [Ip, destport, Identifier, selfPort]
+		selfPort = ARGV[4].to_i
+		destport = ARGV[1]
+		Identifier = ARGV[3].to_i
+		para = [destport, Identifier, selfPort]
 		Server.new("join",para)
 	else
 		puts Erroinfo
