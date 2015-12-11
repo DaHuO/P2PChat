@@ -20,7 +20,7 @@ class Server
 
 		@server = UDPSocket.new()
 		@server.bind(nil, @selfport)
-		@routing_table = RoutingTable.new()
+		@routing_table = RoutingTable.new(@identifier)
 		uri = URI("http://ipecho.net/plain")
 		body = Net::HTTP.get(uri)
 		if body.length != 0
