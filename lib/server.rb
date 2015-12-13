@@ -54,7 +54,7 @@ class Server
 	def run
 		thread_pool = ThreadPool.new(5)
 		loop{
-			text, sender = @server.recvfrom(1000)
+			text, sender = @server.recvfrom(5000)
 			thread_pool.schedule(sender) do
 				p "into thread pool"
 				p Thread.current[:id]
@@ -72,6 +72,33 @@ class Server
 		when 'JOINING_NETWORK'
 			puts 'JOINING_NETWORK'
 			joining_network(message['node_id'], message['port'])
+		when 'JOINING_NETWORK_RELAY'
+			puts 'JOINING_NETWORK_RELAY'
+			joining_network_relay()
+		when 'ROUTING_INFO'
+			puts 'ROUTING_INFO'
+			routing_info()
+		when 'LEAVING_NETWORK'
+			puts 'LEAVING_NETWORK'
+			leaving_network()
+		when 'CHAT'
+			puts 'CHAT'
+			chat()
+		when 'ACK_CHAT'
+			puts 'ACK_CHAT'
+			ack_chat()
+		when 'CHAT_RETRIEVE'
+			puts 'CHAT_RETRIEVE'
+			chat_retrieve()
+		when 'CHAT_RESPONSE'
+			puts 'CHAT_RESPONSE'
+			chat_response()
+		when 'PING'
+			puts 'PING'
+			ping()
+		when 'ACK'
+			puts 'ACK'
+			ack()
 		end
 	end
 
@@ -82,16 +109,40 @@ class Server
 		@routing_table.insert(node_id, port)
 	end
 
-	def routing
+	def joining_network_relay
+
 	end
 
-	def leave
+	def routing_info
+
 	end
 
-	def send_message
+	def leaving_network
+
 	end
 
-	def receive_message
+	def chat
+
+	end
+
+	def ack_chat
+
+	end
+
+	def chat_retrieve
+
+	end
+
+	def chat_response
+
+	end
+
+	def ping
+
+	end
+
+	def ack
+
 	end
 
 	def hashcode(s)
