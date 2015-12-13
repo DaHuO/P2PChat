@@ -107,6 +107,23 @@ class Server
 		s = UDPSocket.new()
 		s.send(routing_message, 0, '127.0.0.1', port)
 		@routing_table.insert(node_id, port)
+		send_joining_relay(node_id)
+	end
+
+	def send_joining_relay(node_id)
+		message = Hash.new()
+		message['type'] = 'JOINING_NETWORK_RELAY'
+		message['node_id'] = node_id
+		message['gateway_id'] = @identifier
+		msg = JSON.generate(message)
+		target = @routing_table.ger_next_from_ls(node_id)
+		if target == @identifier
+			p 'it is the destination'
+		else
+			target_port = @routing_table.getport(target)
+			s = UDPSocket.new()
+			s.send(msg, 0, '127.0.0.1', target_port)
+		end
 	end
 
 	def joining_network_relay

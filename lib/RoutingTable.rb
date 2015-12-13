@@ -82,4 +82,55 @@ class RoutingTable
 		end
 	end
 
+	def get_next_from_ls(node_id)
+		if node_id < @selfId
+			if @ls_l.length == 0
+				return @selfId
+			end
+			temp = @ls_l
+			temp << @selfId
+			bigger = @selfId
+			smaller = @ls_l[0]
+			for i in 0..(temp.length - 1)
+				if temp[temp.length - i] > node_id
+					bigger = temp[temp.length - i]
+				elsif temp[temp.length - i] < node_id
+					smaller = temp[temp.length - i]
+					break
+				else
+					return node_id
+				end
+			end
+			if (node_id - smaller) < (bigger - node_id)
+				return smaller
+			else
+				return bigger
+			end
+		else
+			if @ls_r.length == 0
+				return @selfId
+			end
+			temp = @ls_r
+			temp.insert(0, @selfId)
+			smaller = @selfId
+			bigger = @ls_r[-1]
+			for i in 0..(temp.length - 1)
+				if temp[i] < node_id
+					smaller = temp[i]
+				elsif temp[i] > node_id
+					bigger = temp[i]
+					break
+				else
+					return node_id
+				end
+				if (node_id - smaller) < (bigger - node_id)
+					return smaller
+				else
+					return bigger
+				end
+			end
+		end
+	end
+
+
 end
