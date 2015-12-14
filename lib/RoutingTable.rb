@@ -21,38 +21,53 @@ class RoutingTable
 	# 	@routing_table[node_id] = ip_address
 	# end
 
-	def insert(node_id, port_number)
-		@routing_table[node_id] = port_number
-		node_id_hex = node_id.to_s(16)
-		if node_id_hex.length != 32
-			node_id_hex = '0' * (32 - node_id_hex.length) + node_id_hex
+	def insertNode(node_id, port_number)
+		node_id = node_id.to_i
+		if @routing_table.has_key?node_id
+			return
+		else
+			@routing_table[node_id] = port_number
+			node_id_hex = node_id.to_i.to_s(16)
+			p node_id_hex
+			if node_id_hex.length != 32
+				node_id_hex = '0' * (32 - node_id_hex.length) + node_id_hex
+			end
+			prefix = string_compare(@selfIdHex, node_id_hex)
+			if @rt[prefix] == nil
+				@rt[prefix] = Array.new
+			end
+			@rt[prefix] << node_id
+			push_to_ls(node_id.to_i)
 		end
-		prefix = string_compare(@selfIdHex, node_id_hex)
-		if @rt[prefix] == nil
-			@rt[prefix] = Array.new
-		end
-		@rt[prefix] << node_id
-		push_to_ls(node_id)
 	end
 
 	def del(node_id)
+		node_id = node_id.to_i
 		@routing_table.delete(node_id)
 	end
 
 	def getport(node_id)
+		node_id = node_id.to_i
 		return @routing_table[node_id]
 	end
 
 	def merge(rt)	# for merge routing information
-		for node_id in rt.keys
-			unless @routing_table.has_key?(node_id)
-				@routing_table[node_id] = rt[node_id]
+		p 'merging routing table'
+		if rt == nil
+			return
+		end
+		for info in rt
+			if @routing_table.has_key?(info['node_id'])
+			else
+				@routing_table[info['node_id']] = info['port']
 			end
 		end
+		p @routing_table
 	end
 
 	def push_to_ls(node_id)
-		if(node_id < @selfId)
+		node_id = node_id.to_i
+		if(node_id < @selfId.to_i)
 			insert_to_ls(@ls_l, node_id)
 		else
 			insert_to_ls(@ls_r, node_id)
@@ -69,6 +84,7 @@ class RoutingTable
 	end
 
 	def insert_to_ls(ls, node_id)
+		node_id = node_id.to_i
 		if ls.length == 0
 			ls << node_id
 		else
@@ -83,6 +99,14 @@ class RoutingTable
 	end
 
 	def get_next_from_ls(node_id)
+		node_id = node_id.to_i
+		p 'get_next_from_ls'
+		if node_id.class != 'Fixnum'
+			node_id = node_id.to_i
+		end
+		if @routing_table.has_key?node_id
+			return node_id
+		end
 		if node_id < @selfId
 			if @ls_l.length == 0
 				return @selfId
