@@ -3,6 +3,7 @@ require './lib/RoutingTable.rb'
 require "socket"
 require "net/http"
 require 'json'
+require "thread"
 
 class Server
 	def initialize(info, para)
@@ -53,16 +54,39 @@ class Server
 	end
 
 	def run
-		thread_pool = ThreadPool.new(5)
-		loop{
-			text, sender = @server.recvfrom(5000)
-			thread_pool.schedule(sender) do
-				p "into thread pool"
-				p Thread.current[:id]
-				p text
-				handle_client(text)
+		puts 'ARE you ready to start the chat? Y/N'
+		temp = false
+		thread_pool = ThreadPool.new(2)
+		while line = $stdin.gets.chomp
+			if temp == false
+				if (line == 'N') || (line == 'n')
+					p 'exiting the program'
+					raise SystemExit
+				end
+				temp = true
 			end
-		}
+			handle_stdin(line)
+			Thread.new{
+				loop{
+					text, sender = @server.recvfrom(5000)
+					thread_pool.schedule(sender) do
+						p "into thread pool"
+						p Thread.current[:id]
+						p text
+						handle_client(text)
+					end
+				}
+			}
+		end
+	end
+
+	def handle_stdin(text)
+		if text.include?('#')
+			tag = getTag(text)
+			puts "tag is #{tag}"
+		else
+			return
+		end
 	end
 
 	def handle_client(text)
@@ -82,7 +106,6 @@ class Server
 			puts 'ROUTING_INFO'
 			routing_info(message['gateway_id'], message['node_id'], \
 				message['route_table'], text)
-
 			puts 'end of ROUTING_INFO'
 		when 'LEAVING_NETWORK'
 			puts 'LEAVING_NETWORK'
@@ -248,6 +271,22 @@ class Server
 		msg = JSON.generate(routing_info)
 		p msg
 		return msg
+	end
+
+	def getTag(text)
+		flag = text.index('#')
+		flag_end = text.index(' ', flag)
+		if flag_end == nil
+			flag_end = text.index('.', flag)
+			if flag_end == nil
+				flag_end = text.index(',', flag)
+			end
+		end
+		if flag_end == nil
+			flag_end = 0
+		end
+		tag = text[(flag + 1)..(flag_end - 1)]
+		return tag
 	end
 
 end
