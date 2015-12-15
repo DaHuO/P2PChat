@@ -84,8 +84,39 @@ class Server
 		if text.include?('#')
 			tag = getTag(text)
 			puts "tag is #{tag}"
+			if text == '#' + tag
+				send_chat_retrieve(tag, text)
+			else
+				send_chat(tag, text)
+			end
 		else
 			return
+		end
+	end
+
+	def send_chat_retrieve(tag, text)
+
+	end
+
+	def send_chat(tag, text)
+		p 'send_chat'
+		target_id = hashcode(tag)
+		puts "target_id is #{target_id}"
+		target_node_id = @routing_table.get_next_from_ls(target_id)
+		puts "target_node_id is #{target_node_id}"
+		if target_node_id == @identifier
+			p 'this is the chat destination'
+		else
+			target_port = @routing_table.getport(target_node_id)
+			message = Hash.new()
+			message["type"] = "CHAT"
+			message["target_id"] = target_id
+			message["sender_id"] = @identifier
+			message["tag"] = tag
+			message["text"] = text
+			msg = JSON.generate(message)
+			s = UDPSocket.new()
+			s.send(msg, 0, '127.0.0.1', target_port)
 		end
 	end
 
@@ -113,7 +144,7 @@ class Server
 			puts 'end of LEAVING_NETWORK'
 		when 'CHAT'
 			puts 'CHAT'
-			chat()
+			chat(message['target_id'], text)
 			puts 'end of CHAT'
 		when 'ACK_CHAT'
 			puts 'ACK_CHAT'
@@ -209,11 +240,13 @@ class Server
 			p 'gateway != identifier'
 			p @routing_table.routing_table
 			p gateway_id
+		############## here may be a bug!!!!!!!
 			target = @routing_table.get_next_from_ls(gateway_id)
 			p target
 			target_port = @routing_table.getport(target)
 			s = UDPSocket.new()
 			s.send(msg, 0, '127.0.0.1', target_port)
+		############## here may be a bug!!!!!!!
 		end
 	end
 
@@ -221,8 +254,15 @@ class Server
 
 	end
 
-	def chat
-
+	def chat(target_id, text)
+		next_hop = @routing_table.get_next_from_ls(target_id)
+		if next_hop == @identifier
+			p 'chat ends here'
+		else
+			next_hop_port = @routing_table.getport(next_hop)
+			s = UDPSocket.new()
+			s.send(text, 0, '127.0.0.1', next_hop_port)
+		end
 	end
 
 	def ack_chat
@@ -249,8 +289,6 @@ class Server
 		hash = 0
 		for i in 0..(s.length-1)
 			hash = hash * 31 + s[i].ord
-			p s[i]
-			p s[i].ord
 		end
 		return hash
 	end

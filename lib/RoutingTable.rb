@@ -22,6 +22,7 @@ class RoutingTable
 	# end
 
 	def insertNode(node_id, port_number)
+		puts "trying to insert node_id #{node_id}"
 		node_id = node_id.to_i
 		if @routing_table.has_key?node_id
 			return
@@ -37,6 +38,9 @@ class RoutingTable
 				@rt[prefix] = Array.new
 			end
 			@rt[prefix] << node_id
+			if node_id == @selfId
+				return
+			end
 			push_to_ls(node_id.to_i)
 		end
 	end
@@ -59,7 +63,8 @@ class RoutingTable
 		for info in rt
 			if @routing_table.has_key?(info['node_id'])
 			else
-				@routing_table[info['node_id']] = info['port']
+				# @routing_table[info['node_id']] = info['port']
+				insertNode(info['node_id'], info['port'])
 			end
 		end
 		p @routing_table
@@ -69,8 +74,10 @@ class RoutingTable
 		node_id = node_id.to_i
 		if(node_id < @selfId.to_i)
 			insert_to_ls(@ls_l, node_id)
+			p 'put into ls_l'
 		else
 			insert_to_ls(@ls_r, node_id)
+			p 'put into ls_r'
 		end
 	end
 
@@ -86,7 +93,9 @@ class RoutingTable
 	def insert_to_ls(ls, node_id)
 		node_id = node_id.to_i
 		if ls.length == 0
+			p 'flag here'
 			ls << node_id
+			p ls
 		else
 			for i in 0..(ls.length - 1)
 				if ls[i] > node_id
@@ -95,12 +104,15 @@ class RoutingTable
 				end
 			end
 			ls << node_id
+			p ls
 		end
 	end
 
 	def get_next_from_ls(node_id)
 		node_id = node_id.to_i
 		p 'get_next_from_ls'
+		p @ls_l
+		p @ls_r
 		if node_id.class != 'Fixnum'
 			node_id = node_id.to_i
 		end
@@ -108,6 +120,8 @@ class RoutingTable
 			return node_id
 		end
 		if node_id < @selfId
+			p 'target is smaller than @selfId'
+			p @ls_l.length
 			if @ls_l.length == 0
 				return @selfId
 			end
@@ -115,15 +129,22 @@ class RoutingTable
 			temp << @selfId
 			bigger = @selfId
 			smaller = @ls_l[0]
-			for i in 0..(temp.length - 1)
-				if temp[temp.length - i] > node_id
-					bigger = temp[temp.length - i]
-				elsif temp[temp.length - i] < node_id
-					smaller = temp[temp.length - i]
+			puts "bigger is #{bigger}"
+			puts "smaller is #{smaller}"
+			for i in 1..(temp.length - 1)
+				if temp[temp.length - i - 1] > node_id
+					bigger = temp[temp.length - i - 1]
+				elsif temp[temp.length - i - 1] < node_id
+					smaller = temp[temp.length - i -1]
 					break
 				else
 					return node_id
 				end
+			end
+			puts "bigger is #{bigger}"
+			puts "smaller is #{smaller}"
+			if smaller == bigger
+				return smaller
 			end
 			if (node_id - smaller) < (bigger - node_id)
 				return smaller
@@ -131,6 +152,7 @@ class RoutingTable
 				return bigger
 			end
 		else
+			p 'target is no smaller than @selfId'
 			if @ls_r.length == 0
 				return @selfId
 			end
@@ -138,7 +160,9 @@ class RoutingTable
 			temp.insert(0, @selfId)
 			smaller = @selfId
 			bigger = @ls_r[-1]
-			for i in 0..(temp.length - 1)
+			puts "bigger is #{bigger}"
+			puts "smaller is #{smaller}"
+			for i in 1..(temp.length - 1)
 				if temp[i] < node_id
 					smaller = temp[i]
 				elsif temp[i] > node_id
@@ -147,11 +171,16 @@ class RoutingTable
 				else
 					return node_id
 				end
-				if (node_id - smaller) < (bigger - node_id)
-					return smaller
-				else
-					return bigger
-				end
+			end
+			puts "bigger is #{bigger}"
+			puts "smaller is #{smaller}"
+			if smaller == bigger
+				return smaller
+			end
+			if (node_id - smaller) < (bigger - node_id)
+				return smaller
+			else
+				return bigger
 			end
 		end
 	end
