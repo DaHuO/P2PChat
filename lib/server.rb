@@ -107,6 +107,8 @@ class Server
 		if target_node_id == @identifier
 			p 'this is the chat destination'
 		else
+			p target_node_id
+			p @routing_table.routing_table
 			target_port = @routing_table.getport(target_node_id)
 			message = Hash.new()
 			message["type"] = "CHAT"
@@ -116,6 +118,7 @@ class Server
 			message["text"] = text
 			msg = JSON.generate(message)
 			s = UDPSocket.new()
+			p target_port
 			s.send(msg, 0, '127.0.0.1', target_port)
 		end
 	end
@@ -131,7 +134,8 @@ class Server
 			puts 'end of JOINING_NETWORK'
 		when 'JOINING_NETWORK_RELAY'
 			puts 'JOINING_NETWORK_RELAY'
-			joining_network_relay(message['node_id'], message['gateway_id'], text)
+			joining_network_relay(message['node_id'], message['gateway_id'], \
+				message['port'], text)
 			puts 'end of JOINING_NETWORK_RELAY'
 		when 'ROUTING_INFO'
 			puts 'ROUTING_INFO'
@@ -174,36 +178,42 @@ class Server
 		s = UDPSocket.new()
 		s.send(routing_message, 0, '127.0.0.1', port)
 		p 'sent succesfully'
-		send_joining_relay(node_id)
+		send_joining_relay(node_id, port)
 		p 'sent_joining_relay'
 		@routing_table.insertNode(node_id, port)
 		p 'insert succesfully'
 		p @routing_table.routing_table
 	end
 
-	def send_joining_relay(node_id)
+	def send_joining_relay(node_id, port)
 		message = Hash.new()
 		message['type'] = 'JOINING_NETWORK_RELAY'
 		message['node_id'] = node_id
 		message['gateway_id'] = @identifier
+		message['port'] = port
 		msg = JSON.generate(message)
+		p msg
 		target = @routing_table.get_next_from_ls(node_id)
+		puts "target is #{target}"
 		if target == @identifier
 			p 'it is the destination'
+			# @routing_table.insertNode(node_id, port)
 		else
-			target_port = @routing_table.getport(target.to_s)
+			target_port = @routing_table.getport(target)
 			s = UDPSocket.new()
 			s.send(msg, 0, '127.0.0.1', target_port)
 		end
 	end
 
-	def joining_network_relay(node_id, gateway_id, msg)
+	def joining_network_relay(node_id, gateway_id, port, msg)
 		routing_message = generate_routing_info(gateway_id, node_id, @selfport)
 		puts "routing_message in joining network relay is:\n#{routing_message}"
 		target = @routing_table.get_next_from_ls(node_id)
 		puts "target is #{target}"
 		if target == @identifier
 			p 'the relay destination is here'
+			@routing_table.insertNode(node_id, port)
+			p @routing_table.routing_table
 		else
 			target_port = @routing_table.getport(target)
 			s = UDPSocket.new()

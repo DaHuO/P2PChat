@@ -43,6 +43,7 @@ class RoutingTable
 			end
 			push_to_ls(node_id.to_i)
 		end
+		puts @routing_table
 	end
 
 	def del(node_id)
@@ -67,7 +68,6 @@ class RoutingTable
 				insertNode(info['node_id'], info['port'])
 			end
 		end
-		p @routing_table
 	end
 
 	def push_to_ls(node_id)
