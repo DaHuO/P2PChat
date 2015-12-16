@@ -7,12 +7,12 @@ class TimeOut
 		@time_out[tag] = [Time.now().to_i, true]
 	end
 
-	def monitor(tag)
+	def monitor(tag, tim)
 		while(1)
 			if @time_out[tag][1] == false
 				return true
 			end
-			if (Time.now().to_i - @time_out[tag][0])>3
+			if (Time.now().to_i - @time_out[tag][0]) > tim
 				@time_out.delete(tag)
 				return false
 			end

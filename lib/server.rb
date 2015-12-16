@@ -130,6 +130,7 @@ class Server
 		if target_node_id == @identifier
 			p 'this is the chat destination'
 			@chat_record.insertChat(tag, text, @identifier)
+			return
 		else
 			p target_node_id
 			p @routing_table.routing_table
@@ -146,9 +147,32 @@ class Server
 			s.send(msg, 0, '127.0.0.1', target_port)
 		end
 		@time_out.start(tag)
-		tout = @time_out.monitor(tag)
+		tout = @time_out.monitor(tag, 5)
 		if tout == false
-			p 'we should call the ping here'
+			send_ping(target_id)
+		end
+	end
+
+	def send_ping(target_id)
+		target_node_id = @routing_table.get_next_from_ls(target_id)
+		if target_node_id == @identifier
+			puts 'it is the destination'
+		else
+			target_port = @routing_table.getport(target_node_id)
+			message = Hash.new()
+			message['type'] = 'PING'
+			message['target_id'] = target_id
+			message['sender_id'] = @identifier
+			message['port'] = @selfport
+			msg = JSON.generate(message)
+			s = UDPSocket.new()
+			s.send(msg, 0, '127.0.0.1', target_port)
+			@time_out.start(target_id)
+			tout = @time_out.monitor(target_id, 5)
+			if tout == false
+				puts "we will delete this node #{target_node_id}"
+				@routing_table.del(target_node_id)
+			end
 		end
 	end
 
@@ -207,11 +231,11 @@ class Server
 			puts 'end of CHAT_RESPONSE'
 		when 'PING'
 			puts 'PING'
-			ping()
+			ping(message['target_id'], message['sender_id'], message['port'])
 			puts 'end of PING'
 		when 'ACK'
 			puts 'ACK'
-			ack()
+			ack(message['node_id'])
 			puts 'end of ACK'
 		end
 	end
@@ -374,6 +398,8 @@ class Server
 	end
 
 	def chat_response(sender_id, response, text)
+		p sender_id
+		p @identifier
 		if sender_id == @identifier
 			p 'got the chat response!!'
 			puts response
@@ -385,12 +411,28 @@ class Server
 		end
 	end
 
-	def ping
-
+	def ping(target_id, sender_id, port)
+		send_ack(target_id, port)
+		target_node_id = @routing_table.get_next_from_ls(target_id)
+		if target_node_id == @identifier
+			puts 'it is the destination of ping!!'
+		else
+			send_ping(target_id)
+		end
 	end
 
-	def ack
+	def send_ack(target_id, port)
+		message = Hash.new()
+		message['type'] = 'ACK'
+		message['node_id'] = target_id
+		message['port'] = @selfport
+		msg = JSON.generate(message)
+		s = UDPSocket.new()
+		s.send(msg, 0, '127.0.0.1', port)
+	end
 
+	def ack(node_id)
+		@time_out.stop_monitor(node_id)
 	end
 
 	def hashcode(s)
