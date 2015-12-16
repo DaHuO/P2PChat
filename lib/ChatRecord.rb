@@ -1,5 +1,4 @@
 class ChatRecord
-
 	def initialize
 		@records = Hash.new()
 	end

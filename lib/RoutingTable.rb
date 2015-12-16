@@ -17,10 +17,6 @@ class RoutingTable
 
 	attr_reader :routing_table
 
-	# def insert(node_id, ip_address)
-	# 	@routing_table[node_id] = ip_address
-	# end
-
 	def insertNode(node_id, port_number)
 		puts "trying to insert node_id #{node_id}"
 		node_id = node_id.to_i
