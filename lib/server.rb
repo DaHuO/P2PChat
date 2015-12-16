@@ -174,15 +174,16 @@ class Server
 			puts 'end of CHAT'
 		when 'ACK_CHAT'
 			puts 'ACK_CHAT'
-			ack_chat(message['node_id'], message['tag'])
+			ack_chat(message['node_id'], message['tag'], text)
 			puts 'end of ACK_CHAT'
 		when 'CHAT_RETRIEVE'
 			puts 'CHAT_RETRIEVE'
-			chat_retrieve()
+			chat_retrieve(message['tag'], message['node_id'], \
+				message['sender_id'], text)
 			puts 'end of CHAT_RETRIEVE'
 		when 'CHAT_RESPONSE'
 			puts 'CHAT_RESPONSE'
-			chat_response()
+			chat_response(message['sender_id'], message['response'], text)
 			puts 'end of CHAT_RESPONSE'
 		when 'PING'
 			puts 'PING'
@@ -292,6 +293,7 @@ class Server
 			@chat_record.insertChat(tag, text, sender_id)
 			p @chat_record.retrieveChat(tag)
 			send_ack_chat(sender_id, tag)
+			send_chat_response(tag, sender_id)
 		else
 			next_hop_port = @routing_table.getport(next_hop)
 			s = UDPSocket.new()
@@ -312,18 +314,53 @@ class Server
 		s.send(msg, 0, '127.0.0.1', target_port)
 	end
 
-	def ack_chat(node_id, tag)
-		puts "got the ack_chat message from node #{node_id}, " + \
-		"and the tag is #{tag}."
-
+	def send_chat_response(tag, sender_id)
+		message = Hash.new()
+		message['type'] = "CHAT_RESPONSE"
+		message['tag'] = tag
+		message['node_id'] = @identifier
+		message['sender_id'] = sender_id
+		message['response'] = @chat_record.retrieveChat(tag)
+		msg = JSON.generate(message)
+		target = @routing_table.get_next_from_ls(sender_id)
+		target_port = @routing_table.getport(target)
+		s = UDPSocket.new()
+		s.send(msg, 0, '127.0.0.1', target_port)
 	end
 
-	def chat_retrieve
-
+	def ack_chat(node_id, tag, text)
+		if node_id == @identifier
+			puts "got the ack_chat message from node #{node_id}, " + \
+			"and the tag is #{tag}."
+		else
+			target_id = @routing_table.get_next_from_ls(node_id)
+			target_port = @routing_table.getport(target_id)
+			s = UDPSocket.new()
+			s.send(text, 0, '127.0.0.1', target_port)
+		end
 	end
 
-	def chat_response
+	def chat_retrieve(tag, node_id, sender_id, text)
+		target_id = @routing_table.get_next_from_ls(node_id)
+		if target_id == @identifier
+			send_chat_response(tag, sender_id)
+		else
+			target_port = @routing_table.getport(target_id)
+			s = UDPSocket.new()
+			s.send(text, 0, '127.0.0.1', target_port)
+		end
+	end
 
+	def chat_response(sender_id, response, text)
+		if sender_id == @identifier
+			p 'got the chat response!!'
+			puts response
+		else
+			target_id = @routing_table.get_next_from_ls(sender_id)
+			target_port = @routing_table.getport(target_id)
+			s = UDPSocket.new()
+			s.send(text, 0, '127.0.0.1', target_port)
+		end
 	end
 
 	def ping
