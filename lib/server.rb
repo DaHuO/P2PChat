@@ -92,7 +92,9 @@ class Server
 				send_chat(tag, text)
 			end
 		else
-			return
+			if text == 'KILL_SERVICE'
+				send_leaving_network()
+			end
 		end
 	end
 
@@ -144,6 +146,18 @@ class Server
 		end
 	end
 
+	def send_leaving_network()
+		message = Hash.new()
+		message['type'] = "LEAVING_NETWORK"
+		message['node_id'] = @identifier
+		msg = JSON.generate(message)
+		for target in @routing_table.routing_table.keys
+			target_port = @routing_table.routing_table[target]
+			s = UDPSocket.new()
+			s.send(msg, 0, '127.0.0.1', target_port)
+		end
+	end
+
 	def handle_client(text)
 		message = JSON.parse(text)
 		p message
@@ -165,7 +179,7 @@ class Server
 			puts 'end of ROUTING_INFO'
 		when 'LEAVING_NETWORK'
 			puts 'LEAVING_NETWORK'
-			leaving_network()
+			leaving_network(message['node_id'])
 			puts 'end of LEAVING_NETWORK'
 		when 'CHAT'
 			puts 'CHAT'
@@ -282,8 +296,9 @@ class Server
 		end
 	end
 
-	def leaving_network
-
+	def leaving_network(node_id)
+		@routing_table.del(node_id)
+		p @routing_table.routing_table
 	end
 
 	def chat(target_id, sender_id, tag, text, msg)

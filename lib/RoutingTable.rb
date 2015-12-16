@@ -49,6 +49,14 @@ class RoutingTable
 	def del(node_id)
 		node_id = node_id.to_i
 		@routing_table.delete(node_id)
+		@ls_l.delete(node_id)
+		@ls_r.delete(node_id)
+		node_id_hex = node_id.to_i.to_s(16)
+		if node_id_hex.length != 32
+			node_id_hex = '0' * (32 - node_id_hex.length) + node_id_hex
+		end
+		prefix = string_compare(@selfIdHex, node_id_hex)
+		@rt[prefix].delete(node_id)
 	end
 
 	def getport(node_id)
