@@ -1,9 +1,10 @@
-require './lib/ThreadPool.rb'
-require './lib/RoutingTable.rb'
-require './lib/ChatRecord.rb'
+require "./lib/ThreadPool.rb"
+require "./lib/RoutingTable.rb"
+require "./lib/ChatRecord.rb"
+require "./lib/TimeOut.rb"
 require "socket"
 require "net/http"
-require 'json'
+require "json"
 require "thread"
 
 class Server
@@ -25,6 +26,7 @@ class Server
 		@routing_table = RoutingTable.new(@identifier)
 		@routing_table.insertNode(@identifier, @selfport)
 		@chat_record = ChatRecord.new()
+		@time_out = TimeOut.new()
 		uri = URI("http://ipecho.net/plain")
 		body = Net::HTTP.get(uri)
 		if body.length != 0
@@ -117,7 +119,6 @@ class Server
 			s = UDPSocket.new()
 			s.send(msg, 0, '127.0.0.1', target_port)
 		end
-
 	end
 
 	def send_chat(tag, text)
@@ -143,6 +144,11 @@ class Server
 			s = UDPSocket.new()
 			p target_port
 			s.send(msg, 0, '127.0.0.1', target_port)
+		end
+		@time_out.start(tag)
+		tout = @time_out.monitor(tag)
+		if tout == false
+			p 'we should call the ping here'
 		end
 	end
 
@@ -347,6 +353,7 @@ class Server
 		if node_id == @identifier
 			puts "got the ack_chat message from node #{node_id}, " + \
 			"and the tag is #{tag}."
+			@time_out.stop_monitor(tag)
 		else
 			target_id = @routing_table.get_next_from_ls(node_id)
 			target_port = @routing_table.getport(target_id)
@@ -427,5 +434,6 @@ class Server
 		tag = text[(flag + 1)..(flag_end - 1)]
 		return tag
 	end
+
 
 end

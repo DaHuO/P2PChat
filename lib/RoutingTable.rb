@@ -137,7 +137,9 @@ class RoutingTable
 				return @selfId
 			end
 			temp = @ls_l
-			temp << @selfId
+			unless temp.include?(@selfId)
+				temp << @selfId
+			end
 			bigger = @selfId
 			smaller = @ls_l[0]
 			puts "bigger is #{bigger}"
@@ -168,7 +170,9 @@ class RoutingTable
 				return @selfId
 			end
 			temp = @ls_r
-			temp.insert(0, @selfId)
+			unless temp.include?(@selfId)
+				temp.insert(0, @selfId)
+			end
 			smaller = @selfId
 			bigger = @ls_r[-1]
 			puts "bigger is #{bigger}"
