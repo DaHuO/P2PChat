@@ -1,5 +1,7 @@
 # P2PChat
 
+THIS IS A DEBUGING VERSION OF P2PCHAT WITH DISPLAYING DEBUGING AND ROUTING INFORMATION. THE NEAT RELEASE VERSION CAN BE FOUND IN https://github.com/DaHuO/P2PChat_neat .
+
 This is a simple peer to peer chat program. There is no central control in the network, therefore it is a pure peer to peer network. The communication between nodes is UDP instead of TCP. It allows graceful shutdown, also it can detect node failure and tolerant few nodes failure.
 Due to experiment machine constraint, in this version of code, different nodes are run on one single machine, which means each node share the same localhost '127.0.0.1', but they use different port number.
 
