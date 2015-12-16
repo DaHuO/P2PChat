@@ -1,5 +1,6 @@
 require './lib/ThreadPool.rb'
 require './lib/RoutingTable.rb'
+require './lib/ChatRecord.rb'
 require "socket"
 require "net/http"
 require 'json'
@@ -23,6 +24,7 @@ class Server
 		@server.bind(nil, @selfport)
 		@routing_table = RoutingTable.new(@identifier)
 		@routing_table.insertNode(@identifier, @selfport)
+		@chat_record = ChatRecord.new()
 		uri = URI("http://ipecho.net/plain")
 		body = Net::HTTP.get(uri)
 		if body.length != 0
@@ -106,6 +108,7 @@ class Server
 		puts "target_node_id is #{target_node_id}"
 		if target_node_id == @identifier
 			p 'this is the chat destination'
+			@chat_record.insertChat(tag, text, @identifier)
 		else
 			p target_node_id
 			p @routing_table.routing_table
@@ -148,7 +151,8 @@ class Server
 			puts 'end of LEAVING_NETWORK'
 		when 'CHAT'
 			puts 'CHAT'
-			chat(message['target_id'], text)
+			chat(message['target_id'], message['sender_id'], message['tag'], \
+				message['text'], text)
 			puts 'end of CHAT'
 		when 'ACK_CHAT'
 			puts 'ACK_CHAT'
@@ -197,7 +201,6 @@ class Server
 		puts "target is #{target}"
 		if target == @identifier
 			p 'it is the destination'
-			# @routing_table.insertNode(node_id, port)
 		else
 			target_port = @routing_table.getport(target)
 			s = UDPSocket.new()
@@ -264,14 +267,16 @@ class Server
 
 	end
 
-	def chat(target_id, text)
+	def chat(target_id, sender_id, tag, text, msg)
 		next_hop = @routing_table.get_next_from_ls(target_id)
 		if next_hop == @identifier
 			p 'chat ends here'
+			@chat_record.insertChat(tag, text, sender_id)
+			p @chat_record.retrieveChat(tag)
 		else
 			next_hop_port = @routing_table.getport(next_hop)
 			s = UDPSocket.new()
-			s.send(text, 0, '127.0.0.1', next_hop_port)
+			s.send(msg, 0, '127.0.0.1', next_hop_port)
 		end
 	end
 
