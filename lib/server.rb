@@ -87,7 +87,7 @@ class Server
 			tag = getTag(text)
 			puts "tag is #{tag}"
 			if text == '#' + tag
-				send_chat_retrieve(tag, text)
+				send_chat_retrieve(tag)
 			else
 				send_chat(tag, text)
 			end
@@ -96,7 +96,25 @@ class Server
 		end
 	end
 
-	def send_chat_retrieve(tag, text)
+	def send_chat_retrieve(tag)
+		p 'send_chat_retrieve'
+		target_id = hashcode(tag)
+		puts "target_id is #{target_id}"
+		target_node_id = @routing_table.get_next_from_ls(target_id)
+		puts "target_node_id is #{target_node_id}"
+		if target_node_id == @identifier
+			puts @chat_record.retrieveChat(tag)
+		else
+			target_port = @routing_table.getport(target_node_id)
+			message = Hash.new()
+			message['type'] = 'CHAT_RETRIEVE'
+			message['tag'] = tag
+			message['node_id'] = target_id
+			message['sender_id'] = @identifier
+			msg = JSON.generate(message)
+			s = UDPSocket.new()
+			s.send(msg, 0, '127.0.0.1', target_port)
+		end
 
 	end
 
@@ -156,7 +174,7 @@ class Server
 			puts 'end of CHAT'
 		when 'ACK_CHAT'
 			puts 'ACK_CHAT'
-			ack_chat()
+			ack_chat(message['node_id'], message['tag'])
 			puts 'end of ACK_CHAT'
 		when 'CHAT_RETRIEVE'
 			puts 'CHAT_RETRIEVE'
@@ -273,6 +291,7 @@ class Server
 			p 'chat ends here'
 			@chat_record.insertChat(tag, text, sender_id)
 			p @chat_record.retrieveChat(tag)
+			send_ack_chat(sender_id, tag)
 		else
 			next_hop_port = @routing_table.getport(next_hop)
 			s = UDPSocket.new()
@@ -280,7 +299,22 @@ class Server
 		end
 	end
 
-	def ack_chat
+	def send_ack_chat(sender_id, tag)
+		message = Hash.new()
+		message['type'] = 'ACK_CHAT'
+		message['node_id'] = sender_id
+		message['tag'] = tag
+		msg = JSON.generate(message)
+		p msg
+		target = @routing_table.get_next_from_ls(sender_id)
+		target_port = @routing_table.getport(target)
+		s = UDPSocket.new()
+		s.send(msg, 0, '127.0.0.1', target_port)
+	end
+
+	def ack_chat(node_id, tag)
+		puts "got the ack_chat message from node #{node_id}, " + \
+		"and the tag is #{tag}."
 
 	end
 

@@ -92,6 +92,9 @@ class RoutingTable
 
 	def insert_to_ls(ls, node_id)
 		node_id = node_id.to_i
+		if ls.include? node_id
+			return
+		end
 		if ls.length == 0
 			p 'flag here'
 			ls << node_id
